@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Waitcheck</title>
+    <style>
+        :root {
+            --bg: #f7f8fb;
+            --panel: #ffffff;
+            --line: #dfe5ee;
+            --text: #172033;
+            --muted: #67758a;
+            --primary: #0f766e;
+            --primary-dark: #115e59;
+            --blue: #2563eb;
+            --red: #dc2626;
+            --green: #059669;
+            --amber: #b45309;
+        }
+        * { box-sizing: border-box; }
+        body {
+            margin: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            color: var(--text);
+            background: var(--bg);
+        }
+        .shell {
+            width: min(1120px, calc(100% - 32px));
+            margin: 24px auto;
+            display: grid;
+            grid-template-columns: 248px minmax(0, 1fr);
+            gap: 18px;
+            align-items: start;
+        }
+        .panel {
+            background: var(--panel);
+            border: 1px solid var(--line);
+            border-radius: 8px;
+            box-shadow: 0 1px 2px rgba(17, 24, 39, .04);
+        }
+        .sidebar {
+            position: sticky;
+            top: 18px;
+            padding: 16px;
+        }
+        .main { min-width: 0; }
+        .head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            padding: 18px 20px;
+            border-bottom: 1px solid var(--line);
+        }
+        h1, h2 {
+            margin: 0;
+            font-size: 18px;
+            line-height: 1.25;
+        }
+        h2 { font-size: 15px; }
+        .upstream {
+            color: var(--muted);
+            font-size: 12px;
+            max-width: 48%;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .content { padding: 20px; }
+        .kw-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-top: 14px;
+        }
+        .kw-btn {
+            display: flex;
+            align-items: center;
+            justify-content: flex-start;
+            width: 100%;
+            min-height: 38px;
+            padding: 9px 11px;
+            border: 1px solid var(--line);
+            border-radius: 6px;
+            background: #f9fbfd;
+            color: #23324a;
+            cursor: pointer;
+            font-size: 14px;
+            text-align: left;
+        }
+        .kw-btn:hover { border-color: #9cc3bd; background: #effaf8; }
+        label {
+            display: block;
+            margin-bottom: 7px;
+            color: #40516a;
+            font-size: 13px;
+            font-weight: 700;
+        }
+        .search-row {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) 140px;
+            gap: 10px;
+        }
+        input {
+            width: 100%;
+            height: 44px;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            padding: 0 13px;
+            color: var(--text);
+            font-size: 15px;
+            outline: none;
+        }
+        input:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(15, 118, 110, .12);
+        }
+        button {
+            height: 44px;
+            border: 0;
+            border-radius: 6px;
+            background: var(--primary);
+            color: white;
+            cursor: pointer;
+            font-weight: 700;
+            font-size: 15px;
+        }
+        button:hover { background: var(--primary-dark); }
+        button:disabled { background: #91a3b7; cursor: not-allowed; }
+        .progress {
+            display: none;
+            margin-top: 16px;
+            padding: 14px;
+            border: 1px solid var(--line);
+            border-radius: 8px;
+            background: #f8fafc;
+        }
+        .bar {
+            height: 7px;
+            overflow: hidden;
+            border-radius: 999px;
+            background: #d7dee8;
+        }
+        .fill {
+            width: 0%;
+            height: 100%;
+            background: var(--blue);
+            transition: width .25s ease;
+        }
+        .status {
+            margin-top: 9px;
+            color: var(--muted);
+            font-size: 13px;
+            text-align: center;
+        }
+        .summary {
+            display: none;
+            margin: 0 0 12px;
+            padding: 14px 16px;
+            border: 1px solid #bfdbfe;
+            border-radius: 8px;
+            background: #eff6ff;
+            color: #1e3a8a;
+            font-size: 14px;
+            font-weight: 700;
+        }
+        .filter-btn {
+            display: inline-flex;
+            align-items: center;
+            min-height: 28px;
+            margin-left: 8px;
+            padding: 4px 8px;
+            border-radius: 5px;
+            color: var(--blue);
+            cursor: pointer;
+        }
+        .filter-btn:hover { background: #dbeafe; }
+        .filter-active { background: var(--blue); color: white; pointer-events: none; }
+        .results {
+            display: none;
+            margin-top: 18px;
+            padding: 16px;
+        }
+        .result-item {
+            display: grid;
+            grid-template-columns: 92px minmax(0, 1fr);
+            gap: 14px;
+            padding: 14px 0;
+            border-top: 1px solid var(--line);
+        }
+        .result-item:first-of-type { border-top: 0; }
+        .badge {
+            align-self: start;
+            min-height: 32px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 6px;
+            padding: 6px 8px;
+            font-size: 12px;
+            font-weight: 800;
+        }
+        .closed { color: var(--green); background: #ecfdf5; border: 1px solid #a7f3d0; }
+        .open { color: var(--red); background: #fef2f2; border: 1px solid #fecaca; }
+        .meta {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            color: var(--muted);
+            font-size: 12px;
+            font-weight: 700;
+            margin-bottom: 7px;
+        }
+        .text {
+            padding: 10px 12px;
+            border-left: 3px solid #cbd5e1;
+            border-radius: 6px;
+            background: #f1f5f9;
+            color: #334155;
+            font-size: 14px;
+            line-height: 1.5;
+            word-break: break-word;
+        }
+        .latest {
+            display: inline-block;
+            margin-top: 8px;
+            padding: 6px 9px;
+            border: 1px dashed #fcd34d;
+            border-radius: 5px;
+            background: #fffbeb;
+            color: var(--amber);
+            font-size: 12px;
+        }
+        .reason {
+            margin-top: 7px;
+            color: var(--red);
+            font-size: 13px;
+            font-weight: 700;
+            line-height: 1.45;
+        }
+        .result-item[data-closed="true"] .reason { color: var(--green); }
+        .link {
+            display: inline-flex;
+            align-items: center;
+            min-height: 28px;
+            margin-top: 9px;
+            padding: 4px 8px;
+            border: 1px solid #bfdbfe;
+            border-radius: 5px;
+            background: #eff6ff;
+            color: var(--blue);
+            font-size: 12px;
+            font-weight: 700;
+            text-decoration: none;
+        }
+        .empty {
+            padding: 22px;
+            border: 1px dashed var(--line);
+            border-radius: 8px;
+            color: var(--muted);
+            text-align: center;
+            font-size: 14px;
+        }
+        @media (max-width: 820px) {
+            .shell { grid-template-columns: 1fr; margin-top: 14px; }
+            .sidebar { position: static; }
+            .kw-list { flex-direction: row; flex-wrap: wrap; }
+            .kw-btn { width: auto; flex: 1 1 128px; justify-content: center; }
+            .head { align-items: flex-start; flex-direction: column; }
+            .upstream { max-width: 100%; }
+            .search-row { grid-template-columns: 1fr; }
+            .result-item { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <div class="shell">
+        <aside class="panel sidebar">
+            <h2>快捷选择</h2>
+            <div class="kw-list" id="kw-list">
+                <button class="kw-btn" type="button" onclick="fillKeyword('早班全体')">早班全体</button>
+                <button class="kw-btn" type="button" onclick="fillKeyword('中班全体')">中班全体</button>
+                <button class="kw-btn" type="button" onclick="fillKeyword('晚班全体')">晚班全体</button>
+                <button class="kw-btn" type="button" onclick="fillKeyword('同意遗漏')">同意遗漏</button>
+            </div>
+        </aside>
+
+        <main class="main">
+            <section class="panel">
+                <div class="head">
+                    <h1>Waitcheck 闭环检测</h1>
+                    <div class="upstream" title="{{ upstream_base_url }}">原接口: {{ upstream_base_url }}</div>
+                </div>
+                <div class="content">
+                    <label for="keyword">扫描配置</label>
+                    <div class="search-row">
+                        <input type="text" id="keyword" value="早班全体" placeholder="输入关键词或选择班次">
+                        <button type="button" id="btn-search" onclick="startCheck()">开始排查</button>
+                    </div>
+                    <div class="progress" id="progress">
+                        <div class="bar"><div class="fill" id="fill"></div></div>
+                        <div class="status" id="status">等待开始</div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="panel results" id="results-panel">
+                <div class="summary" id="summary"></div>
+                <div id="results"></div>
+            </section>
+        </main>
+    </div>
+
+    <script>
+        let allResults = [];
+        let activeFilter = 'all';
+
+        function fillKeyword(keyword) {
+            document.getElementById('keyword').value = keyword;
+        }
+
+        function escapeHtml(value) {
+            return String(value ?? '').replace(/[&<>"']/g, char => ({
+                '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+            }[char]));
+        }
+
+        function setProgress(percent, message) {
+            document.getElementById('progress').style.display = 'block';
+            document.getElementById('fill').style.width = `${Math.max(0, Math.min(100, Number(percent) || 0))}%`;
+            document.getElementById('status').innerText = message || '处理中...';
+        }
+
+        async function loadKeywords() {
+            try {
+                const response = await fetch('/api/keywords');
+                const data = await response.json();
+                const list = document.getElementById('kw-list');
+                const keywords = Array.isArray(data.keywords) && data.keywords.length ? data.keywords : ['早班全体', '中班全体', '晚班全体', '同意遗漏'];
+                list.innerHTML = keywords.map(keyword => (
+                    `<button class="kw-btn" type="button" onclick="fillKeyword('${escapeHtml(keyword)}')">${escapeHtml(keyword)}</button>`
+                )).join('');
+            } catch (error) {
+                console.warn('关键词加载失败', error);
+            }
+        }
+
+        async function startCheck() {
+            const keyword = document.getElementById('keyword').value.trim();
+            if (!keyword) {
+                alert('扫描配置不能为空');
+                return;
+            }
+
+            const button = document.getElementById('btn-search');
+            const panel = document.getElementById('results-panel');
+            const results = document.getElementById('results');
+            const summary = document.getElementById('summary');
+            button.disabled = true;
+            panel.style.display = 'block';
+            results.innerHTML = '<div class="empty">正在连接原接口...</div>';
+            summary.style.display = 'none';
+            allResults = [];
+            activeFilter = 'all';
+            setProgress(1, '建立连接并初始化...');
+
+            try {
+                const response = await fetch(`/api/wait_check_stream?keyword=${encodeURIComponent(keyword)}`);
+                if (!response.ok) {
+                    throw new Error(await response.text() || `请求失败 (${response.status})`);
+                }
+                const reader = response.body.getReader();
+                const decoder = new TextDecoder();
+                let buffer = '';
+
+                while (true) {
+                    const { value, done } = await reader.read();
+                    if (done) break;
+
+                    buffer += decoder.decode(value, { stream: true });
+                    const lines = buffer.split('\n');
+                    buffer = lines.pop();
+
+                    for (const line of lines) {
+                        if (!line.trim()) continue;
+                        try {
+                            const data = JSON.parse(line);
+                            if (data.type === 'progress') {
+                                setProgress(data.percent, data.msg);
+                            } else if (data.type === 'result') {
+                                allResults.push(data);
+                                results.innerHTML = `<div class="empty">已发现 ${allResults.length} 条记录，等待扫描完成...</div>`;
+                            } else if (data.type === 'done') {
+                                setProgress(100, '扫描完成');
+                                allResults.sort((a, b) => new Date(b.time) - new Date(a.time));
+                                renderSummary(data.total, data.closed, data.open);
+                                renderResults();
+                            }
+                        } catch (error) {
+                            console.error('解析失败', error, line);
+                        }
+                    }
+                }
+            } catch (error) {
+                setProgress(0, `运行异常: ${error.message}`);
+                results.innerHTML = `<div class="empty">运行异常: ${escapeHtml(error.message)}</div>`;
+            } finally {
+                button.disabled = false;
+            }
+        }
+
+        function renderSummary(total, closed, open) {
+            const summary = document.getElementById('summary');
+            summary.style.display = 'block';
+            summary.innerHTML = `
+                扫描报告: 合计 ${total} 记录
+                <span class="filter-btn ${activeFilter === 'closed' ? 'filter-active' : ''}" onclick="filterResults('closed')">已闭环 (${closed})</span>
+                <span class="filter-btn ${activeFilter === 'open' ? 'filter-active' : ''}" onclick="filterResults('open')">需跟进 (${open})</span>
+                <span class="filter-btn ${activeFilter === 'all' ? 'filter-active' : ''}" onclick="filterResults('all')">全览</span>
+            `;
+        }
+
+        function filterResults(type) {
+            activeFilter = type;
+            const total = allResults.length;
+            const closed = allResults.filter(item => item.is_closed).length;
+            renderSummary(total, closed, total - closed);
+            renderResults();
+        }
+
+        function renderResults() {
+            const results = document.getElementById('results');
+            const visible = allResults.filter(item => {
+                if (activeFilter === 'closed') return item.is_closed;
+                if (activeFilter === 'open') return !item.is_closed;
+                return true;
+            });
+
+            if (!visible.length) {
+                results.innerHTML = '<div class="empty">当前筛选下没有记录</div>';
+                return;
+            }
+
+            results.innerHTML = visible.map(item => `
+                <article class="result-item" data-closed="${item.is_closed ? 'true' : 'false'}">
+                    <div class="badge ${item.is_closed ? 'closed' : 'open'}">${item.is_closed ? '已闭环' : '需跟进'}</div>
+                    <div>
+                        <div class="meta">
+                            <span>${escapeHtml(item.time)}</span>
+                            <span>${escapeHtml(item.group_name)}</span>
+                        </div>
+                        <div class="text">${escapeHtml(item.found_text)}</div>
+                        <div class="latest">${escapeHtml(item.latest_text || '')}</div>
+                        <div class="reason">${escapeHtml(item.reason || '')}</div>
+                        ${item.link ? `<a class="link" href="${escapeHtml(item.link)}" target="_blank" rel="noopener">打开 Telegram</a>` : ''}
+                    </div>
+                </article>
+            `).join('');
+        }
+
+        loadKeywords();
+    </script>
+</body>
+</html>
