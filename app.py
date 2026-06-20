@@ -28,7 +28,15 @@ def extract_keywords(html):
 @app.route("/")
 @app.route("/tool/wait_check")
 def wait_check_ui():
-    return render_template("waitcheck.html", upstream_base_url=UPSTREAM_BASE_URL)
+    try:
+        response = requests.get(upstream_url("/tool/wait_check"), timeout=REQUEST_TIMEOUT)
+        response.raise_for_status()
+        proxied = Response(response.text, mimetype="text/html; charset=utf-8")
+        proxied.headers["Cache-Control"] = "no-cache"
+        return proxied
+    except Exception:
+        app.logger.exception("Failed to load upstream Waitcheck page")
+        return render_template("waitcheck.html")
 
 
 @app.route("/api/config")
