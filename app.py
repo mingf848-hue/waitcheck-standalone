@@ -53,14 +53,14 @@ LOGIN_HTML = """
   </style>
 </head>
 <body>
-  <form class="card" method="post" autocomplete="off">
+  <form class="card" method="post" autocomplete="off" data-lpignore="true" data-1p-ignore>
     <h1>登录</h1>
     {% if error %}<div class="error">{{ error }}</div>{% endif %}
     <input type="hidden" name="next" value="{{ next_url }}">
     <label>用户名</label>
-    <input name="username" value="{{ username }}" autofocus>
+    <input name="wc_user" value="{{ username }}" autocomplete="off" data-lpignore="true" data-1p-ignore autofocus>
     <label>密码</label>
-    <input name="password" type="password" autocomplete="current-password">
+    <input name="wc_pass" type="password" autocomplete="off" data-lpignore="true" data-1p-ignore>
     <button type="submit">登录</button>
   </form>
 </body>
@@ -106,8 +106,8 @@ def login_page():
     username = WAITCHECK_USERNAME
     error = ""
     if request.method == "POST":
-        username = str(request.form.get("username") or "")
-        password = str(request.form.get("password") or "")
+        username = str(request.form.get("wc_user") or request.form.get("username") or "")
+        password = str(request.form.get("wc_pass") or request.form.get("password") or "")
         if not waitcheck_auth_is_configured():
             error = "服务未配置 WAITCHECK_PASSWORD，暂时无法登录。"
         elif hmac.compare_digest(username, WAITCHECK_USERNAME) and hmac.compare_digest(password, WAITCHECK_PASSWORD):
