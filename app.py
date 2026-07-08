@@ -38,7 +38,7 @@ LOGIN_HTML = """
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Waitcheck 登录</title>
+  <title>登录</title>
   <style>
     *{box-sizing:border-box}
     body{margin:0;min-height:100vh;display:grid;place-items:center;background:#f3f5f7;color:#111827;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;padding:20px}
@@ -54,8 +54,7 @@ LOGIN_HTML = """
 </head>
 <body>
   <form class="card" method="post" autocomplete="off">
-    <h1>Waitcheck 登录</h1>
-    <div class="sub">请输入独立 Waitcheck 的访问账号密码。</div>
+    <h1>登录</h1>
     {% if error %}<div class="error">{{ error }}</div>{% endif %}
     <input type="hidden" name="next" value="{{ next_url }}">
     <label>用户名</label>
