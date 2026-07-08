@@ -25,6 +25,16 @@ http://127.0.0.1:8080
 
 ## 配置
 
+独立 Waitcheck 自己的页面访问密码：
+
+```bash
+export WAITCHECK_USERNAME=waitcheck
+export WAITCHECK_PASSWORD=你的独立Waitcheck密码
+export WAITCHECK_SESSION_SECRET=随机长字符串
+```
+
+`WAITCHECK_SESSION_SECRET` 用来签登录 Cookie；不配置也能运行，但服务重启后需要重新登录。
+
 如需切换原服务地址，设置：
 
 ```bash
@@ -37,6 +47,8 @@ export WAITCHECK_API_BASE_URL=https://your-original-cs-bot.example.com
 export WAITCHECK_UPSTREAM_USERNAME=changshan
 export WAITCHECK_UPSTREAM_PASSWORD=你的ZD登录密码
 ```
+
+这组是原 `cs-bot` 的 ZD 账号密码，不是独立 Waitcheck 的页面密码。
 
 也可以直接使用同名 ZD 变量：
 
