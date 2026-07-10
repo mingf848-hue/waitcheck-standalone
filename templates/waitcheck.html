@@ -289,6 +289,8 @@
                         <input type="text" id="keyword" value="早班全体" placeholder="输入关键词或选择班次">
                         <button type="button" id="btn-search" onclick="startCheck()">开始排查</button>
                     </div>
+                    <label for="checkDate" style="margin-top:14px">指定日期（北京时间，可选）</label>
+                    <input type="date" id="checkDate">
                     <div class="progress" id="progress">
                         <div class="bar"><div class="fill" id="fill"></div></div>
                         <div class="status" id="status">等待开始</div>
@@ -339,6 +341,7 @@
 
         async function startCheck() {
             const keyword = document.getElementById('keyword').value.trim();
+            const checkDate = document.getElementById('checkDate').value.trim();
             if (!keyword) {
                 alert('扫描配置不能为空');
                 return;
@@ -357,7 +360,9 @@
             setProgress(1, '建立连接并初始化...');
 
             try {
-                const response = await fetch(`/api/wait_check_stream?keyword=${encodeURIComponent(keyword)}`);
+                const params = new URLSearchParams({ keyword });
+                if (checkDate) params.set('date', checkDate);
+                const response = await fetch(`/api/wait_check_stream?${params.toString()}`);
                 if (!response.ok) {
                     throw new Error(await response.text() || `请求失败 (${response.status})`);
                 }
@@ -381,12 +386,18 @@
                                 setProgress(data.percent, data.msg);
                             } else if (data.type === 'result') {
                                 allResults.push(data);
-                                results.innerHTML = `<div class="empty">已发现 ${allResults.length} 条记录，等待扫描完成...</div>`;
+                                allResults.sort((a, b) => new Date(b.time) - new Date(a.time));
+                                const liveClosed = allResults.filter(item => item.is_closed).length;
+                                renderSummary(allResults.length, liveClosed, allResults.length - liveClosed);
+                                renderResults();
                             } else if (data.type === 'done') {
                                 setProgress(100, '扫描完成');
                                 allResults.sort((a, b) => new Date(b.time) - new Date(a.time));
                                 renderSummary(data.total, data.closed, data.open);
                                 renderResults();
+                            } else if (data.type === 'error') {
+                                setProgress(0, `运行异常: ${data.msg || '检测失败'}`);
+                                results.innerHTML = `<div class="empty">${escapeHtml(data.msg || '检测失败')}</div>`;
                             }
                         } catch (error) {
                             console.error('解析失败', error, line);

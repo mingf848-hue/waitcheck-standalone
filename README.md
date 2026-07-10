@@ -60,4 +60,4 @@ export ZD_ADMIN_PASSWORD=你的ZD登录密码
 新服务会调用：
 
 - `GET /tool/wait_check`：从原服务抽取快捷关键词
-- `GET /api/wait_check_stream?keyword=...`：转发闭环检测流式结果
+- `GET /api/wait_check_stream?keyword=...&date=YYYY-MM-DD`：转发闭环检测流式结果；日期可选并会原样传给上游

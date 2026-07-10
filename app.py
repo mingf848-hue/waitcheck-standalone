@@ -6,6 +6,7 @@ from urllib.parse import quote, urljoin
 
 import requests
 from flask import Flask, Response, jsonify, redirect, render_template, render_template_string, request, session, stream_with_context
+from waitcheck_proxy import build_wait_check_params
 
 
 DEFAULT_UPSTREAM_BASE_URL = "https://yyhelp.zeabur.app"
@@ -254,8 +255,11 @@ def api_keywords():
 @app.route("/api/wait_check_stream")
 def api_wait_check_stream():
     keyword = (request.args.get("keyword") or "").strip()
+    date_text = (request.args.get("date") or "").strip()
     if not keyword:
         return jsonify({"ok": False, "error": "Keyword required"}), 400
+
+    upstream_params = build_wait_check_params(keyword, date_text)
 
     def generate():
         session = None
@@ -263,7 +267,7 @@ def api_wait_check_stream():
         try:
             session, response = open_upstream_stream(
                 "/api/wait_check_stream",
-                params={"keyword": keyword},
+                params=upstream_params,
             )
             if response.status_code != 200:
                 yield response.text or f'{{"type":"progress","percent":0,"msg":"原接口返回 {response.status_code}"}}\n'
