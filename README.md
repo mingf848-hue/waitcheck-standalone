@@ -5,7 +5,7 @@
 默认调用原 `cs-bot` 服务：
 
 ```text
-https://yyhelp.zeabur.app
+https://cshelp.167.104.102.80.sslip.io
 ```
 
 ## 本地运行
