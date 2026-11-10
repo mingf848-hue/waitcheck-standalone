@@ -9,7 +9,7 @@ from flask import Flask, Response, jsonify, redirect, render_template, render_te
 from waitcheck_proxy import build_wait_check_params
 
 
-DEFAULT_UPSTREAM_BASE_URL = "https://yyhelp.zeabur.app"
+DEFAULT_UPSTREAM_BASE_URL = "https://cshelp.167.104.102.80.sslip.io"
 UPSTREAM_BASE_URL = (os.environ.get("WAITCHECK_API_BASE_URL") or DEFAULT_UPSTREAM_BASE_URL).strip().rstrip("/")
 REQUEST_TIMEOUT = int(os.environ.get("WAITCHECK_REQUEST_TIMEOUT", "30") or "30")
 UPSTREAM_USERNAME = (
